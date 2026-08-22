@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_2107891_autofi_0.CodeAutoFixerAjax</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>CodeAutoFixerAjax</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var CodeAutoFixerAjax = Class.create();
+CodeAutoFixerAjax.prototype = Object.extendsObject(AbstractAjaxProcessor, {
+
+    applyFix: function() {
+        var logId = this.getParameter('sysparm_log_id');
+        var engine = new CodeAutoFixerEngine();
+        return engine.applyFix(logId) ? 'success' : 'error';
+    },
+
+    rejectFix: function() {
+        var logId = this.getParameter('sysparm_log_id');
+        var engine = new CodeAutoFixerEngine();
+        return engine.rejectFix(logId) ? 'success' : 'error';
+    },
+
+    type: 'CodeAutoFixerAjax'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-19 18:17:54</sys_created_on>
+        <sys_id>7d88e8f7738687504f31ff604ab8b7cd</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeAutoFixerAjax</sys_name>
+        <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+        <sys_update_name>sys_script_include_7d88e8f7738687504f31ff604ab8b7cd</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-19 18:17:54</sys_updated_on>
+    </sys_script_include>
+</record_update>

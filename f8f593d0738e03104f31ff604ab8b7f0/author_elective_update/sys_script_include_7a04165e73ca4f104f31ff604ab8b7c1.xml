@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_2107891_autofi_0.CodeAutoFixerEngine</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>CodeAutoFixerEngine</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var CodeAutoFixerEngine = Class.create();
+CodeAutoFixerEngine.prototype = {
+    initialize: function() {
+        this.companyPrefix = "BRP: ";
+        this.logTable = "x_2107891_autofi_0_autofixer_log"; // Ton nom de table exact
+    },
+
+    /**
+     * Orchestrateur principal appelé par le bouton
+     */
+    processUpdateSet: function(updateSetId) {
+        if (!updateSetId) return;
+
+        var grUpdateXML = new GlideRecord('sys_update_xml');
+        grUpdateXML.addQuery('update_set', updateSetId);
+        // On cible uniquement les composants de script pour éviter de toucher aux layouts
+        grUpdateXML.addQuery('name', 'STARTSWITH', 'sys_script').addOrCondition('name', 'STARTSWITH', 'sys_script_include').addOrCondition('name', 'STARTSWITH', 'sys_client_script');
+        grUpdateXML.query();
+
+        while (grUpdateXML.next()) {
+            var tableName = grUpdateXML.getValue('type'); 
+            var targetTable = grUpdateXML.getValue('name').split('_')[0] + '_' + grUpdateXML.getValue('name').split('_')[1]; 
+            var targetSysId = grUpdateXML.getValue('sys_id');
+
+            var grSource = new GlideRecord(targetTable);
+            if (grSource.get(targetSysId)) {
+                this.fixNaming(grSource, updateSetId, tableName);
+                this.injectHeaderComment(grSource, updateSetId, tableName);
+            }
+        }
+        
+        this.checkConflicts(updateSetId);
+    },
+
+    /**
+     * Correction des conventions de nommage
+     */
+    fixNaming: function(grRecord, updateSetId, tableName) {
+        var currentName = grRecord.getValue('name');
+        
+        if (currentName && !currentName.startsWith(this.companyPrefix)) {
+            var newName = this.companyPrefix + currentName;
+            grRecord.setValue('name', newName);
+            grRecord.update(); 
+
+            this._createLog(updateSetId, tableName + ": " + newName, "naming_corrected", currentName, newName, "Added standard company prefix.");
+        }
+    },
+
+    /**
+     * Injection de l'en-tête de documentation
+     */
+    injectHeaderComment: function(grRecord, updateSetId, tableName) {
+        if (!grRecord.isValidField('script')) return;
+        
+        var currentScript = grRecord.getValue('script') || "";
+        var recordName = grRecord.getValue('name');
+
+        if (!currentScript.includes("/**")) {
+            var today = new GlideDateTime().getLocalDate().getDisplayValue();
+            var header = "/**\n" +
+                         " * @name " + recordName + "\n" +
+                         " * @description Automatically structured and standardized for deployment.\n" +
+                         " * @date " + today + "\n" +
+                         " */\n\n";
+
+            grRecord.setValue('script', header + currentScript);
+            grRecord.update();
+
+            this._createLog(updateSetId, tableName + ": " + recordName, "header_injected", recordName, recordName, "Injected missing JSDoc header documentation block.");
+        }
+    },
+
+    /**
+     * Détection des conflits entre développeurs
+     */
+    checkConflicts: function(updateSetId) {
+        var grMyUpdates = new GlideRecord('sys_update_xml');
+        grMyUpdates.addQuery('update_set', updateSetId);
+        grMyUpdates.query();
+
+        while (grMyUpdates.next()) {
+            var targetName = grMyUpdates.getValue('target_name');
+            
+            var grConflicts = new GlideRecord('sys_update_xml');
+            grConflicts.addQuery('target_name', targetName);
+            grConflicts.addQuery('update_set.state', 'In Progress');
+            grConflicts.addQuery('update_set', '!=', updateSetId);
+            grConflicts.query();
+
+            if (grConflicts.next()) {
+                var colleague = grConflicts.update_set.sys_created_by.getDisplayValue();
+                var otherSet = grConflicts.update_set.name.getDisplayValue();
+                
+                this._createLog(
+                    updateSetId, 
+                    grMyUpdates.getValue('type') + ": " + targetName, 
+                    "conflict_detected", 
+                    targetName, 
+                    targetName, 
+                    "COLLISION WARNING: This element is also modified by [" + colleague + "] in the Update Set [" + otherSet + "]."
+                );
+            }
+        }
+    },
+
+    /**
+     * Insertion dans ta table de logs
+     */
+    _createLog: function(updateSet, element, actionType, previousName, newName, details) {
+        var grLog = new GlideRecord(this.logTable);
+        grLog.initialize();
+        grLog.setValue('update_set', updateSet);
+        grLog.setValue('corrected_element', element);
+        grLog.setValue('action_type', actionType);
+        grLog.setValue('previous_name', previousName);
+        grLog.setValue('new_name', newName);
+        grLog.setValue('details', details);
+        grLog.insert();
+    },
+
+    type: 'CodeAutoFixerEngine'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-15 09:53:12</sys_created_on>
+        <sys_id>7a04165e73ca4f104f31ff604ab8b7c1</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>CodeAutoFixerEngine</sys_name>
+        <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+        <sys_update_name>sys_script_include_7a04165e73ca4f104f31ff604ab8b7c1</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-15 10:06:40</sys_updated_on>
+    </sys_script_include>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</application>
+        <file_path/>
+        <instance_id>245642d4eb8ec3543a48f459bad0cde6</instance_id>
+        <instance_name>dev428931</instance_name>
+        <name>sys_script_include_7a04165e73ca4f104f31ff604ab8b7c1</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_2107891_autofi_0.CodeAutoFixerEngine&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description/&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;CodeAutoFixerEngine&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[var CodeAutoFixerEngine = Class.create();
+CodeAutoFixerEngine.prototype = {
+    initialize: function() {
+        this.companyPrefix = "BRP: ";
+        this.logTable = "x_2107891_autofi_0_autofixer_log"; // Ton nom de table exact
+    },
+
+    /**
+     * Orchestrateur principal appelé par le bouton
+     */
+    processUpdateSet: function(updateSetId) {
+        if (!updateSetId) return;
+
+        var grUpdateXML = new GlideRecord('sys_update_xml');
+        grUpdateXML.addQuery('update_set', updateSetId);
+        // On cible uniquement les composants de script pour éviter de toucher aux layouts
+        grUpdateXML.addQuery('name', 'STARTSWITH', 'sys_script').addOrCondition('name', 'STARTSWITH', 'sys_script_include').addOrCondition('name', 'STARTSWITH', 'sys_client_script');
+        grUpdateXML.query();
+
+        while (grUpdateXML.next()) {
+            var tableName = grUpdateXML.getValue('type'); 
+            var targetTable = grUpdateXML.getValue('name').split('_')[0] + '_' + grUpdateXML.getValue('name').split('_')[1]; 
+            var targetSysId = grUpdateXML.getValue('sys_id');
+
+            var grSource = new GlideRecord(targetTable);
+            if (grSource.get(targetSysId)) {
+                this.fixNaming(grSource, updateSetId, tableName);
+                this.injectHeaderComment(grSource, updateSetId, tableName);
+            }
+        }
+        
+        this.checkConflicts(updateSetId);
+    },
+
+    /**
+     * Correction des conventions de nommage
+     */
+    fixNaming: function(grRecord, updateSetId, tableName) {
+        var currentName = grRecord.getValue('name');
+        
+        if (currentName &amp;&amp; !currentName.startsWith(this.companyPrefix)) {
+            var newName = this.companyPrefix + currentName;
+            grRecord.setValue('name', newName);
+            grRecord.update(); 
+
+            this._createLog(updateSetId, tableName + ": " + newName, "naming_corrected", currentName, newName, "Added standard company prefix.");
+        }
+    },
+
+    /**
+     * Injection de l'en-tête de documentation
+     */
+    injectHeaderComment: function(grRecord, updateSetId, tableName) {
+        if (!grRecord.isValidField('script')) return;
+        
+        var currentScript = grRecord.getValue('script') || "";
+        var recordName = grRecord.getValue('name');
+
+        if (!currentScript.includes("/**")) {
+            var today = new GlideDateTime().getLocalDate().getDisplayValue();
+            var header = "/**\n" +
+                         " * @name " + recordName + "\n" +
+                         " * @description Automatically structured and standardized for deployment.\n" +
+                         " * @date " + today + "\n" +
+                         " */\n\n";
+
+            grRecord.setValue('script', header + currentScript);
+            grRecord.update();
+
+            this._createLog(updateSetId, tableName + ": " + recordName, "header_injected", recordName, recordName, "Injected missing JSDoc header documentation block.");
+        }
+    },
+
+    /**
+     * Détection des conflits entre développeurs
+     */
+    checkConflicts: function(updateSetId) {
+        var grMyUpdates = new GlideRecord('sys_update_xml');
+        grMyUpdates.addQuery('update_set', updateSetId);
+        grMyUpdates.query();
+
+        while (grMyUpdates.next()) {
+            var targetName = grMyUpdates.getValue('target_name');
+            
+            var grConflicts = new GlideRecord('sys_update_xml');
+            grConflicts.addQuery('target_name', targetName);
+            grConflicts.addQuery('update_set.state', 'In Progress');
+            grConflicts.addQuery('update_set', '!=', updateSetId);
+            grConflicts.query();
+
+            if (grConflicts.next()) {
+                var colleague = grConflicts.update_set.sys_created_by.getDisplayValue();
+                var otherSet = grConflicts.update_set.name.getDisplayValue();
+                
+                this._createLog(
+                    updateSetId, 
+                    grMyUpdates.getValue('type') + ": " + targetName, 
+                    "conflict_detected", 
+                    targetName, 
+                    targetName, 
+                    "COLLISION WARNING: This element is also modified by [" + colleague + "] in the Update Set [" + otherSet + "]."
+                );
+            }
+        }
+    },
+
+    /**
+     * Insertion dans ta table de logs
+     */
+    _createLog: function(updateSet, element, actionType, previousName, newName, details) {
+        var grLog = new GlideRecord(this.logTable);
+        grLog.initialize();
+        grLog.setValue('update_set', updateSet);
+        grLog.setValue('corrected_element', element);
+        grLog.setValue('action_type', actionType);
+        grLog.setValue('previous_name', previousName);
+        grLog.setValue('new_name', newName);
+        grLog.setValue('details', details);
+        grLog.insert();
+    },
+
+    type: 'CodeAutoFixerEngine'
+};]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-15 09:53:12&lt;/sys_created_on&gt;&lt;sys_id&gt;7a04165e73ca4f104f31ff604ab8b7c1&lt;/sys_id&gt;&lt;sys_mod_count&gt;1&lt;/sys_mod_count&gt;&lt;sys_name&gt;CodeAutoFixerEngine&lt;/sys_name&gt;&lt;sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0"&gt;f8f593d0738e03104f31ff604ab8b7f0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="AutoFixer : Code Governance "&gt;f8f593d0738e03104f31ff604ab8b7f0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_7a04165e73ca4f104f31ff604ab8b7c1&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-07-15 10:06:40&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-862947550</payload_hash>
+        <record_name>CodeAutoFixerEngine</record_name>
+        <reverted_from/>
+        <source>30f5d3d0738e03104f31ff604ab8b744</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-15 10:06:42</sys_created_on>
+        <sys_id>20a71292730e4f104f31ff604ab8b783</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19f653e303d0000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-15 10:06:42</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>2ca71292ef0e4f10e2dbfd88d05ae181</update_guid>
+        <update_guid_history>2ca71292ef0e4f10e2dbfd88d05ae181:-862947550,0384569e8fca4f1057b31b4bfab8db2b:209964115</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-15 10:09:04</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>41208a2b039d4db08cb376574c312490</sys_id>
+        <sys_metadata>7a04165e73ca4f104f31ff604ab8b7c1</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeAutoFixerEngine</sys_name>
+        <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+        <sys_scope_delete display_value="">24c2ef6c7c9a49d4b185c9d3cde894e4</sys_scope_delete>
+        <sys_update_name>sys_script_include_7a04165e73ca4f104f31ff604ab8b7c1</sys_update_name>
+        <sys_update_version display_value="sys_script_include_7a04165e73ca4f104f31ff604ab8b7c1">20a71292730e4f104f31ff604ab8b783</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-15 10:09:04</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>
