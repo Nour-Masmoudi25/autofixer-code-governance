@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="enforce_dot_walk_cross_scope_access=true" db_object_id="8eb9eb18730243104f31ff604ab8b7f6" label="AutoFixer Log" max_length="40" name="x_2107891_autofi_0_autofixer_log" type="collection">
+        <element label="Proposed Value" max_length="4000" name="proposed_value" type="string"/>
+        <element choice="1" label="Action Type" max_length="40" name="action_type" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="setbasicauth pending" sequence="10" value="setbasicauth_pending"/>
+                <element inactive_on_update="false" label="global business rule pending" sequence="12" value="global_business_rule_pending"/>
+                <element inactive_on_update="false" label="Header Injected" sequence="1" value="header_injected"/>
+                <element inactive_on_update="false" label="new array pending" sequence="3" value="new_array_pending"/>
+                <element inactive_on_update="false" label="gssleep pending" sequence="5" value="gssleep_pending"/>
+                <element inactive_on_update="false" label="getreference pending" sequence="7" value="getreference_pending"/>
+                <element inactive_on_update="false" label="global client script_pending" sequence="11" value="global_client_script_pending"/>
+                <element inactive_on_update="false" label="hardcoded url pending" sequence="9" value="hardcoded_url_pending"/>
+                <element inactive_on_update="false" label="Conflict Detected" sequence="2" value="conflict_detected"/>
+                <element inactive_on_update="false" label="Naming Corrected" sequence="0" value="naming_corrected"/>
+                <element inactive_on_update="false" label="hardcoded sysid pending" sequence="8" value="hardcoded_sysid_pending"/>
+                <element inactive_on_update="false" label="getxml pending" sequence="6" value="getxml_pending"/>
+                <element inactive_on_update="false" label="new object pending" sequence="4" value="new_object_pending"/>
+            </choice>
+        </element>
+        <element label="Assigned To" max_length="32" name="assigned_to" reference="sys_user" type="reference"/>
+        <element attributes="ignore_filter_on_new=true" default="javascript:global.getNextObjNumberPadded();" label="Number" max_length="40" name="number" type="string"/>
+        <element label="Target Table" max_length="40" name="target_table" type="string"/>
+        <element label="Details" max_length="4000" name="details" type="string"/>
+        <element label="Audit History" max_length="4000" name="audit_history" type="string"/>
+        <element label="New Name" max_length="100" name="new_name" type="string"/>
+        <element display="true" label="Corrected Element" max_length="250" name="corrected_element" type="string"/>
+        <element choice="3" default="pending" label="Status" max_length="255" name="status" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="applied" sequence="1" value="applied"/>
+                <element inactive_on_update="false" label="pending" sequence="0" value="pending"/>
+                <element inactive_on_update="false" label="rejected" sequence="2" value="rejected"/>
+            </choice>
+        </element>
+        <element label="Current Value" max_length="4000" name="current_value" type="string"/>
+        <element label="Previous Name" max_length="100" name="previous_name" type="string"/>
+        <element label="Update Set" max_length="32" name="update_set" reference="sys_update_set" type="reference"/>
+        <element label="Target Sys ID" max_length="40" name="target_sys_id" type="string"/>
+        <element label="Line Number" max_length="40" name="line_number" type="integer"/>
+        <index name="index">
+            <element name="assigned_to"/>
+        </index>
+        <index name="index2">
+            <element name="update_set"/>
+        </index>
+    </element>
+</database>

@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_2107891_autofi_0.BRP: CodeAutoFixerEngine</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>BRP: CodeAutoFixerEngine</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var CodeAutoFixerEngine = Class.create();
+CodeAutoFixerEngine.prototype = {
+    initialize: function() {
+        this.companyPrefix = "BRP: ";
+        this.logTable = "x_2107891_autofi_0_autofixer_log"; // Your exact table name
+    },
+
+    /**
+     * Main orchestrator called by the "Auto-Fix & Prepare Code" button.
+     * IMPORTANT: this only DETECTS and LOGS issues as "pending".
+     * Nothing in the real Update Set is changed until a human clicks Apply.
+     */
+    processUpdateSet: function(updateSetId) {
+        if (!updateSetId) return;
+
+        // STEP 1: Flag background/system noise (proposed for removal, not removed yet)
+        this.detectSystemJunk(updateSetId);
+
+        // STEP 2: Flag naming and documentation issues on real script objects
+        var grUpdateXML = new GlideRecord('sys_update_xml');
+        grUpdateXML.addQuery('update_set', updateSetId);
+        grUpdateXML.addQuery('name', 'STARTSWITH', 'sys_script')
+                   .addOrCondition('name', 'STARTSWITH', 'sys_script_include')
+                   .addOrCondition('name', 'STARTSWITH', 'sys_script_client'); // fixed: was "sys_client_script"
+        grUpdateXML.query();
+
+        while (grUpdateXML.next()) {
+            var xmlName = grUpdateXML.getValue('name');
+            var typeName = grUpdateXML.getValue('type') || "Script Component";
+
+            // sys_update_xml.name is formatted as "<table>_<32-char sys_id>"
+            if (xmlName && xmlName.length > 33) {
+                var targetSysId = xmlName.substring(xmlName.length - 32);
+                var targetTable = xmlName.substring(0, xmlName.length - 33);
+
+                var grSource = new GlideRecord(targetTable);
+                if (grSource.isValid() && grSource.get(targetSysId)) {
+                    this.detectNamingIssue(grSource, updateSetId, typeName);
+                    this.detectMissingHeader(grSource, updateSetId, typeName);
+                }
+            }
+        }
+
+        // STEP 3: Flag collisions with other developers' in-progress Update Sets
+        this.checkConflicts(updateSetId);
+    },
+
+    /**
+     * DETECT 1: Flags background/system-generated noise in the Update Set.
+     * Proposed fix on Apply = remove this entry from the Update Set.
+     */
+    detectSystemJunk: function(updateSetId) {
+        var grJunk = new GlideRecord('sys_update_xml');
+        grJunk.addQuery('update_set', updateSetId);
+        grJunk.addQuery('sys_created_by', 'system');
+        grJunk.query();
+
+        while (grJunk.next()) {
+            var recordName = grJunk.getValue('target_name') || grJunk.getValue('name');
+            var recordType = grJunk.getValue('type') || 'System Record';
+
+            this._createLog({
+                updateSet: updateSetId,
+                element: recordType + ": " + recordName,
+                actionType: 'junk_pending',
+                details: "System-generated change detected (created by 'system'). Likely background noise (scheduled job, property auto-update) rather than real development work.",
+                targetTable: 'sys_update_xml',
+                targetSysId: grJunk.getUniqueValue(),
+                currentValue: 'Present in update set',
+                proposedValue: 'Removed from update set'
+            });
+        }
+    },
+
+    /**
+     * DETECT 2: Flags a missing naming-convention prefix.
+     * Proposed fix on Apply = rename the record.
+     */
+    detectNamingIssue: function(grRecord, updateSetId, tableName) {
+        var currentName = grRecord.getValue('name');
+
+        if (currentName && !currentName.startsWith(this.companyPrefix)) {
+            var newName = this.companyPrefix + currentName;
+
+            this._createLog({
+                updateSet: updateSetId,
+                element: tableName + ": " + currentName,
+                actionType: 'naming_pending',
+                previousName: currentName,
+                newName: newName,
+                details: "Naming convention issue: missing standard company prefix ('" + this.companyPrefix + "').",
+                targetTable: grRecord.getTableName(),
+                targetSysId: grRecord.getUniqueValue(),
+                currentValue: currentName,
+                proposedValue: newName
+            });
+        }
+    },
+
+    /**
+     * DETECT 3: Flags a missing JSDoc header block.
+     * Proposed fix on Apply = rewrite the script field with the header prepended.
+     */
+    detectMissingHeader: function(grRecord, updateSetId, tableName) {
+        if (!grRecord.isValidField('script')) return;
+
+        var currentScript = grRecord.getValue('script') || "";
+        var recordName = grRecord.getValue('name');
+
+        if (!currentScript.includes("/**")) {
+            var today = new GlideDateTime().getLocalDate().getDisplayValue();
+            var header = "/**\n" +
+                         " * @name " + recordName + "\n" +
+                         " * @description Automatically structured and standardized for deployment.\n" +
+                         " * @date " + today + "\n" +
+                         " */\n\n";
+            var proposedScript = header + currentScript;
+
+            this._createLog({
+                updateSet: updateSetId,
+                element: tableName + ": " + recordName,
+                actionType: 'header_pending',
+                previousName: recordName,
+                newName: recordName,
+                details: "Missing JSDoc documentation header block.",
+                targetTable: grRecord.getTableName(),
+                targetSysId: grRecord.getUniqueValue(),
+                currentValue: currentScript,
+                proposedValue: proposedScript
+            });
+        }
+    },
+
+    /**
+     * DETECT 4: Flags collisions with other developers' in-progress Update Sets.
+     * No auto-fix applies here — Apply just acknowledges/dismisses the warning.
+     */
+    checkConflicts: function(updateSetId) {
+        var grMyUpdates = new GlideRecord('sys_update_xml');
+        grMyUpdates.addQuery('update_set', updateSetId);
+        grMyUpdates.query();
+
+        while (grMyUpdates.next()) {
+            var targetName = grMyUpdates.getValue('target_name');
+            if (!targetName) continue;
+
+            var grConflicts = new GlideRecord('sys_update_xml');
+            grConflicts.addQuery('target_name', targetName);
+            grConflicts.addQuery('update_set.state', 'In Progress');
+            grConflicts.addQuery('update_set', '!=', updateSetId);
+            grConflicts.query();
+
+            while (grConflicts.next()) {
+                var colleague = grConflicts.update_set.sys_created_by.getDisplayValue();
+                var otherSet = grConflicts.update_set.name.getDisplayValue();
+
+                this._createLog({
+                    updateSet: updateSetId,
+                    element: grMyUpdates.getValue('type') + ": " + targetName,
+                    actionType: 'conflict_detected',
+                    previousName: targetName,
+                    newName: targetName,
+                    details: "COLLISION WARNING: This element is also modified by [" + colleague + "] in the Update Set [" + otherSet + "]. Review manually before promoting.",
+                    currentValue: '',
+                    proposedValue: ''
+                });
+            }
+        }
+    },
+
+    /**
+     * Called by the "Apply Fix" UI Action. Only acts on a record that is still 'pending'.
+     */
+    applyFix: function(logSysId) {
+        var grLog = new GlideRecord(this.logTable);
+        if (!grLog.get(logSysId)) return false;
+        if (grLog.getValue('status') != 'pending') return false;
+
+        var actionType = grLog.getValue('action_type');
+        var targetTable = grLog.getValue('target_table');
+        var targetSysId = grLog.getValue('target_sys_id');
+
+        if (actionType == 'naming_pending' && targetTable && targetSysId) {
+            var grName = new GlideRecord(targetTable);
+            if (grName.get(targetSysId)) {
+                grName.setValue('name', grLog.getValue('proposed_value'));
+                grName.update();
+            }
+        } else if (actionType == 'header_pending' && targetTable && targetSysId) {
+            var grHeader = new GlideRecord(targetTable);
+            if (grHeader.get(targetSysId)) {
+                grHeader.setValue('script', grLog.getValue('proposed_value'));
+                grHeader.update();
+            }
+        } else if (actionType == 'junk_pending' && targetSysId) {
+            var grXml = new GlideRecord('sys_update_xml');
+            if (grXml.get(targetSysId)) {
+                grXml.deleteRecord();
+            }
+        }
+        // conflict_detected: nothing to apply — Apply just acknowledges it below
+
+        grLog.setValue('status', 'applied');
+        grLog.update();
+        return true;
+    },
+
+    /**
+     * Called by the "Reject" UI Action. Marks the log as rejected, no change made.
+     */
+    rejectFix: function(logSysId) {
+        var grLog = new GlideRecord(this.logTable);
+        if (grLog.get(logSysId)) {
+            grLog.setValue('status', 'rejected');
+            grLog.update();
+        }
+        return true;
+    },
+
+    /**
+     * Central log writer — every detection method funnels through here.
+     */
+    _createLog: function(logData) {
+        var grLog = new GlideRecord(this.logTable);
+        grLog.initialize();
+        grLog.setValue('update_set', logData.updateSet);
+        grLog.setValue('corrected_element', logData.element);
+        grLog.setValue('action_type', logData.actionType);
+        grLog.setValue('previous_name', logData.previousName || '');
+        grLog.setValue('new_name', logData.newName || '');
+        grLog.setValue('details', logData.details);
+        grLog.setValue('target_table', logData.targetTable || '');
+        grLog.setValue('target_sys_id', logData.targetSysId || '');
+        grLog.setValue('current_value', logData.currentValue || '');
+        grLog.setValue('proposed_value', logData.proposedValue || '');
+        grLog.setValue('status', 'pending');
+        grLog.insert();
+    },
+
+    type: 'CodeAutoFixerEngine'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-15 09:57:34</sys_created_on>
+        <sys_id>7c651ede73ca4f104f31ff604ab8b713</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>BRP: CodeAutoFixerEngine</sys_name>
+        <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+        <sys_update_name>sys_script_include_7c651ede73ca4f104f31ff604ab8b713</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-19 17:38:51</sys_updated_on>
+    </sys_script_include>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</application>
+        <file_path/>
+        <instance_id>245642d4eb8ec3543a48f459bad0cde6</instance_id>
+        <instance_name>dev428931</instance_name>
+        <name>sys_script_include_7c651ede73ca4f104f31ff604ab8b713</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_2107891_autofi_0.BRP: CodeAutoFixerEngine&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description/&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;BRP: CodeAutoFixerEngine&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[var CodeAutoFixerEngine = Class.create();
+CodeAutoFixerEngine.prototype = {
+    initialize: function() {
+        this.companyPrefix = "BRP: ";
+        this.logTable = "x_2107891_autofi_0_autofixer_log"; // Your exact table name
+    },
+
+    /**
+     * Main orchestrator called by the "Auto-Fix &amp; Prepare Code" button.
+     * IMPORTANT: this only DETECTS and LOGS issues as "pending".
+     * Nothing in the real Update Set is changed until a human clicks Apply.
+     */
+    processUpdateSet: function(updateSetId) {
+        if (!updateSetId) return;
+
+        // STEP 1: Flag background/system noise (proposed for removal, not removed yet)
+        this.detectSystemJunk(updateSetId);
+
+        // STEP 2: Flag naming and documentation issues on real script objects
+        var grUpdateXML = new GlideRecord('sys_update_xml');
+        grUpdateXML.addQuery('update_set', updateSetId);
+        grUpdateXML.addQuery('name', 'STARTSWITH', 'sys_script')
+                   .addOrCondition('name', 'STARTSWITH', 'sys_script_include')
+                   .addOrCondition('name', 'STARTSWITH', 'sys_script_client'); // fixed: was "sys_client_script"
+        grUpdateXML.query();
+
+        while (grUpdateXML.next()) {
+            var xmlName = grUpdateXML.getValue('name');
+            var typeName = grUpdateXML.getValue('type') || "Script Component";
+
+            // sys_update_xml.name is formatted as "&lt;table&gt;_&lt;32-char sys_id&gt;"
+            if (xmlName &amp;&amp; xmlName.length &gt; 33) {
+                var targetSysId = xmlName.substring(xmlName.length - 32);
+                var targetTable = xmlName.substring(0, xmlName.length - 33);
+
+                var grSource = new GlideRecord(targetTable);
+                if (grSource.isValid() &amp;&amp; grSource.get(targetSysId)) {
+                    this.detectNamingIssue(grSource, updateSetId, typeName);
+                    this.detectMissingHeader(grSource, updateSetId, typeName);
+                }
+            }
+        }
+
+        // STEP 3: Flag collisions with other developers' in-progress Update Sets
+        this.checkConflicts(updateSetId);
+    },
+
+    /**
+     * DETECT 1: Flags background/system-generated noise in the Update Set.
+     * Proposed fix on Apply = remove this entry from the Update Set.
+     */
+    detectSystemJunk: function(updateSetId) {
+        var grJunk = new GlideRecord('sys_update_xml');
+        grJunk.addQuery('update_set', updateSetId);
+        grJunk.addQuery('sys_created_by', 'system');
+        grJunk.query();
+
+        while (grJunk.next()) {
+            var recordName = grJunk.getValue('target_name') || grJunk.getValue('name');
+            var recordType = grJunk.getValue('type') || 'System Record';
+
+            this._createLog({
+                updateSet: updateSetId,
+                element: recordType + ": " + recordName,
+                actionType: 'junk_pending',
+                details: "System-generated change detected (created by 'system'). Likely background noise (scheduled job, property auto-update) rather than real development work.",
+                targetTable: 'sys_update_xml',
+                targetSysId: grJunk.getUniqueValue(),
+                currentValue: 'Present in update set',
+                proposedValue: 'Removed from update set'
+            });
+        }
+    },
+
+    /**
+     * DETECT 2: Flags a missing naming-convention prefix.
+     * Proposed fix on Apply = rename the record.
+     */
+    detectNamingIssue: function(grRecord, updateSetId, tableName) {
+        var currentName = grRecord.getValue('name');
+
+        if (currentName &amp;&amp; !currentName.startsWith(this.companyPrefix)) {
+            var newName = this.companyPrefix + currentName;
+
+            this._createLog({
+                updateSet: updateSetId,
+                element: tableName + ": " + currentName,
+                actionType: 'naming_pending',
+                previousName: currentName,
+                newName: newName,
+                details: "Naming convention issue: missing standard company prefix ('" + this.companyPrefix + "').",
+                targetTable: grRecord.getTableName(),
+                targetSysId: grRecord.getUniqueValue(),
+                currentValue: currentName,
+                proposedValue: newName
+            });
+        }
+    },
+
+    /**
+     * DETECT 3: Flags a missing JSDoc header block.
+     * Proposed fix on Apply = rewrite the script field with the header prepended.
+     */
+    detectMissingHeader: function(grRecord, updateSetId, tableName) {
+        if (!grRecord.isValidField('script')) return;
+
+        var currentScript = grRecord.getValue('script') || "";
+        var recordName = grRecord.getValue('name');
+
+        if (!currentScript.includes("/**")) {
+            var today = new GlideDateTime().getLocalDate().getDisplayValue();
+            var header = "/**\n" +
+                         " * @name " + recordName + "\n" +
+                         " * @description Automatically structured and standardized for deployment.\n" +
+                         " * @date " + today + "\n" +
+                         " */\n\n";
+            var proposedScript = header + currentScript;
+
+            this._createLog({
+                updateSet: updateSetId,
+                element: tableName + ": " + recordName,
+                actionType: 'header_pending',
+                previousName: recordName,
+                newName: recordName,
+                details: "Missing JSDoc documentation header block.",
+                targetTable: grRecord.getTableName(),
+                targetSysId: grRecord.getUniqueValue(),
+                currentValue: currentScript,
+                proposedValue: proposedScript
+            });
+        }
+    },
+
+    /**
+     * DETECT 4: Flags collisions with other developers' in-progress Update Sets.
+     * No auto-fix applies here — Apply just acknowledges/dismisses the warning.
+     */
+    checkConflicts: function(updateSetId) {
+        var grMyUpdates = new GlideRecord('sys_update_xml');
+        grMyUpdates.addQuery('update_set', updateSetId);
+        grMyUpdates.query();
+
+        while (grMyUpdates.next()) {
+            var targetName = grMyUpdates.getValue('target_name');
+            if (!targetName) continue;
+
+            var grConflicts = new GlideRecord('sys_update_xml');
+            grConflicts.addQuery('target_name', targetName);
+            grConflicts.addQuery('update_set.state', 'In Progress');
+            grConflicts.addQuery('update_set', '!=', updateSetId);
+            grConflicts.query();
+
+            while (grConflicts.next()) {
+                var colleague = grConflicts.update_set.sys_created_by.getDisplayValue();
+                var otherSet = grConflicts.update_set.name.getDisplayValue();
+
+                this._createLog({
+                    updateSet: updateSetId,
+                    element: grMyUpdates.getValue('type') + ": " + targetName,
+                    actionType: 'conflict_detected',
+                    previousName: targetName,
+                    newName: targetName,
+                    details: "COLLISION WARNING: This element is also modified by [" + colleague + "] in the Update Set [" + otherSet + "]. Review manually before promoting.",
+                    currentValue: '',
+                    proposedValue: ''
+                });
+            }
+        }
+    },
+
+    /**
+     * Called by the "Apply Fix" UI Action. Only acts on a record that is still 'pending'.
+     */
+    applyFix: function(logSysId) {
+        var grLog = new GlideRecord(this.logTable);
+        if (!grLog.get(logSysId)) return false;
+        if (grLog.getValue('status') != 'pending') return false;
+
+        var actionType = grLog.getValue('action_type');
+        var targetTable = grLog.getValue('target_table');
+        var targetSysId = grLog.getValue('target_sys_id');
+
+        if (actionType == 'naming_pending' &amp;&amp; targetTable &amp;&amp; targetSysId) {
+            var grName = new GlideRecord(targetTable);
+            if (grName.get(targetSysId)) {
+                grName.setValue('name', grLog.getValue('proposed_value'));
+                grName.update();
+            }
+        } else if (actionType == 'header_pending' &amp;&amp; targetTable &amp;&amp; targetSysId) {
+            var grHeader = new GlideRecord(targetTable);
+            if (grHeader.get(targetSysId)) {
+                grHeader.setValue('script', grLog.getValue('proposed_value'));
+                grHeader.update();
+            }
+        } else if (actionType == 'junk_pending' &amp;&amp; targetSysId) {
+            var grXml = new GlideRecord('sys_update_xml');
+            if (grXml.get(targetSysId)) {
+                grXml.deleteRecord();
+            }
+        }
+        // conflict_detected: nothing to apply — Apply just acknowledges it below
+
+        grLog.setValue('status', 'applied');
+        grLog.update();
+        return true;
+    },
+
+    /**
+     * Called by the "Reject" UI Action. Marks the log as rejected, no change made.
+     */
+    rejectFix: function(logSysId) {
+        var grLog = new GlideRecord(this.logTable);
+        if (grLog.get(logSysId)) {
+            grLog.setValue('status', 'rejected');
+            grLog.update();
+        }
+        return true;
+    },
+
+    /**
+     * Central log writer — every detection method funnels through here.
+     */
+    _createLog: function(logData) {
+        var grLog = new GlideRecord(this.logTable);
+        grLog.initialize();
+        grLog.setValue('update_set', logData.updateSet);
+        grLog.setValue('corrected_element', logData.element);
+        grLog.setValue('action_type', logData.actionType);
+        grLog.setValue('previous_name', logData.previousName || '');
+        grLog.setValue('new_name', logData.newName || '');
+        grLog.setValue('details', logData.details);
+        grLog.setValue('target_table', logData.targetTable || '');
+        grLog.setValue('target_sys_id', logData.targetSysId || '');
+        grLog.setValue('current_value', logData.currentValue || '');
+        grLog.setValue('proposed_value', logData.proposedValue || '');
+        grLog.setValue('status', 'pending');
+        grLog.insert();
+    },
+
+    type: 'CodeAutoFixerEngine'
+};]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-15 09:57:34&lt;/sys_created_on&gt;&lt;sys_id&gt;7c651ede73ca4f104f31ff604ab8b713&lt;/sys_id&gt;&lt;sys_mod_count&gt;4&lt;/sys_mod_count&gt;&lt;sys_name&gt;BRP: CodeAutoFixerEngine&lt;/sys_name&gt;&lt;sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0"&gt;f8f593d0738e03104f31ff604ab8b7f0&lt;/sys_package&gt;&lt;sys_policy&gt;read&lt;/sys_policy&gt;&lt;sys_scope display_value="AutoFixer : Code Governance "&gt;f8f593d0738e03104f31ff604ab8b7f0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_7c651ede73ca4f104f31ff604ab8b713&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-07-19 17:38:51&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-1129870955</payload_hash>
+        <record_name>BRP: CodeAutoFixerEngine</record_name>
+        <reverted_from/>
+        <source>30f5d3d0738e03104f31ff604ab8b744</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-19 17:38:53</sys_created_on>
+        <sys_id>d77564f3734687504f31ff604ab8b7ad</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19f7b759b740000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-19 17:38:53</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>577564f3b6468750cc5a77b60e3f8fac</update_guid>
+        <update_guid_history>577564f3b6468750cc5a77b60e3f8fac:-1129870955,a651dbea0e8acf10435a018aff0bc59e:1502982022,55115baa958acf10e94c9e7fafa2c351:-519510776,52d79ed2790e4f105353fda33bd8db08:-949633186,cb855ede8eca4f1016d376c7e6c69b08:-606217239</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-26 16:31:56</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>0005b82d8fbb4266b34b16afce700ba4</sys_id>
+        <sys_metadata>7c651ede73ca4f104f31ff604ab8b713</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>BRP: CodeAutoFixerEngine</sys_name>
+        <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+        <sys_parent/>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+        <sys_scope_delete display_value="">24c2ef6c7c9a49d4b185c9d3cde894e4</sys_scope_delete>
+        <sys_update_name>sys_script_include_7c651ede73ca4f104f31ff604ab8b713</sys_update_name>
+        <sys_update_version display_value="sys_script_include_7c651ede73ca4f104f31ff604ab8b713">d77564f3734687504f31ff604ab8b7ad</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-26 16:31:56</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

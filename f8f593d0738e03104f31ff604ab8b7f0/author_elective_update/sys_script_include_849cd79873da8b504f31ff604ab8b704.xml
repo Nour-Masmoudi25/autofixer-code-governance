@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_2107891_autofi_0.CodeAutoFixerPublicAPI</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>CodeAutoFixerPublicAPI</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var CodeAutoFixerPublicAPI = Class.create(); 
+CodeAutoFixerPublicAPI.prototype = { initialize: function() {}, runScan: function(updateSetId) { var engine = new CodeAutoFixerEngine(); engine.processUpdateSet(updateSetId); }, type: 'CodeAutoFixerPublicAPI' };]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-21 20:17:50</sys_created_on>
+        <sys_id>849cd79873da8b504f31ff604ab8b704</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeAutoFixerPublicAPI</sys_name>
+        <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+        <sys_update_name>sys_script_include_849cd79873da8b504f31ff604ab8b704</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-21 20:17:50</sys_updated_on>
+    </sys_script_include>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</application>
+        <file_path/>
+        <instance_id>245642d4eb8ec3543a48f459bad0cde6</instance_id>
+        <instance_name>dev428931</instance_name>
+        <name>sys_script_include_849cd79873da8b504f31ff604ab8b704</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_2107891_autofi_0.CodeAutoFixerPublicAPI&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description/&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;CodeAutoFixerPublicAPI&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[var CodeAutoFixerPublicAPI = Class.create(); 
+CodeAutoFixerPublicAPI.prototype = { initialize: function() {}, runScan: function(updateSetId) { var engine = new CodeAutoFixerEngine(); engine.processUpdateSet(updateSetId); }, type: 'CodeAutoFixerPublicAPI' };]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-21 20:17:50&lt;/sys_created_on&gt;&lt;sys_id&gt;849cd79873da8b504f31ff604ab8b704&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_name&gt;CodeAutoFixerPublicAPI&lt;/sys_name&gt;&lt;sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0"&gt;f8f593d0738e03104f31ff604ab8b7f0&lt;/sys_package&gt;&lt;sys_policy&gt;read&lt;/sys_policy&gt;&lt;sys_scope display_value="AutoFixer : Code Governance "&gt;f8f593d0738e03104f31ff604ab8b7f0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_849cd79873da8b504f31ff604ab8b704&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-07-21 20:17:50&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>158568702</payload_hash>
+        <record_name>CodeAutoFixerPublicAPI</record_name>
+        <reverted_from/>
+        <source>d37f20f373c687504f31ff604ab8b780</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-21 20:17:52</sys_created_on>
+        <sys_id>f30d1b9873da8b504f31ff604ab8b7cc</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19f8653e3410000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-21 20:17:52</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>b30d1b989bda8b509b73d18e6fe4afcb</update_guid>
+        <update_guid_history>b30d1b989bda8b509b73d18e6fe4afcb:158568702</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-21 21:02:31</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>9a943a12e1ed43d8aeea59bd3cef19a4</sys_id>
+        <sys_metadata>849cd79873da8b504f31ff604ab8b704</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeAutoFixerPublicAPI</sys_name>
+        <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+        <sys_parent/>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+        <sys_scope_delete display_value="">24c2ef6c7c9a49d4b185c9d3cde894e4</sys_scope_delete>
+        <sys_update_name>sys_script_include_849cd79873da8b504f31ff604ab8b704</sys_update_name>
+        <sys_update_version display_value="sys_script_include_849cd79873da8b504f31ff604ab8b704">f30d1b9873da8b504f31ff604ab8b7cc</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-21 21:02:31</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

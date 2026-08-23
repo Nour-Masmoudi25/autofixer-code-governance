@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_ui_section caption="" section_id="7fb9eb18730243104f31ff604ab8b7b1" sys_domain="global" table="x_2107891_autofi_0_autofixer_log" version="3" view="">
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>number</element>
+            <position>0</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:11</sys_created_on>
+            <sys_id>4938bfae73b6c3104f31ff604ab8b78b</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:11</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>action_type</element>
+            <position>1</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:12</sys_created_on>
+            <sys_id>0538bfae73b6c3104f31ff604ab8b78c</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:12</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>details</element>
+            <position>2</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:12</sys_created_on>
+            <sys_id>cd38bfae73b6c3104f31ff604ab8b78c</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:12</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>new_name</element>
+            <position>3</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:12</sys_created_on>
+            <sys_id>8938bfae73b6c3104f31ff604ab8b78d</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:12</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>previous_name</element>
+            <position>4</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:12</sys_created_on>
+            <sys_id>4538bfae73b6c3104f31ff604ab8b78e</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:12</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>corrected_element</element>
+            <position>5</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:12</sys_created_on>
+            <sys_id>1138bfae73b6c3104f31ff604ab8b78f</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:12</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>update_set</element>
+            <position>6</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:12</sys_created_on>
+            <sys_id>d938bfae73b6c3104f31ff604ab8b78f</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:12</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>line_number</element>
+            <position>7</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:12</sys_created_on>
+            <sys_id>9538bfae73b6c3104f31ff604ab8b790</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:12</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>current_value</element>
+            <position>8</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:13</sys_created_on>
+            <sys_id>5138bfae73b6c3104f31ff604ab8b791</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:13</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>proposed_value</element>
+            <position>9</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:13</sys_created_on>
+            <sys_id>1d38bfae73b6c3104f31ff604ab8b791</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:13</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>status</element>
+            <position>10</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:13</sys_created_on>
+            <sys_id>d538bfae73b6c3104f31ff604ab8b792</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:13</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>assigned_to</element>
+            <position>11</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:13</sys_created_on>
+            <sys_id>a138bfae73b6c3104f31ff604ab8b793</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:13</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>target_sys_id</element>
+            <position>12</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:13</sys_created_on>
+            <sys_id>6d38bfae73b6c3104f31ff604ab8b793</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:13</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>target_table</element>
+            <position>13</position>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-08-22 18:34:13</sys_created_on>
+            <sys_id>2938bfae73b6c3104f31ff604ab8b794</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_2107891_autofi_0_autofixer_log" sys_domain="global" view="Default view">7fb9eb18730243104f31ff604ab8b7b1</sys_ui_section>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-08-22 18:34:13</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_section action="INSERT_OR_UPDATE">
+            <caption/>
+            <header>false</header>
+            <name>x_2107891_autofi_0_autofixer_log</name>
+            <roles/>
+            <sys_class_name>sys_ui_section</sys_class_name>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-07-09 10:57:36</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>7fb9eb18730243104f31ff604ab8b7b1</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>x_2107891_autofi_0_autofixer_log</sys_name>
+            <sys_overrides/>
+            <sys_package display_value="AutoFixer : Code Governance " source="x_2107891_autofi_0">f8f593d0738e03104f31ff604ab8b7f0</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="AutoFixer : Code Governance ">f8f593d0738e03104f31ff604ab8b7f0</sys_scope>
+            <sys_update_name>sys_ui_section_7fb9eb18730243104f31ff604ab8b7b1</sys_update_name>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-07-09 10:57:36</sys_updated_on>
+            <sys_user/>
+            <title>true</title>
+            <view display_value="Default view" name="NULL">Default view</view>
+            <view_name/>
+        </sys_ui_section>
+    </sys_ui_section>
+</record_update>
