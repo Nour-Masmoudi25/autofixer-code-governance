@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="UTF-8"?><unload unload_date="2026-08-26 09:19:38">
+<sys_remote_update_set action="INSERT_OR_UPDATE">
+<application display_value="Global">global</application>
+<application_name>Global</application_name>
+<application_scope>global</application_scope>
+<application_version/>
+<collisions/>
+<commit_date/>
+<deleted/>
+<description/>
+<inserted/>
+<name>AutoFixer Export Global</name>
+<origin_sys_id/>
+<parent display_value=""/>
+<release_date/>
+<remote_base_update_set display_value=""/>
+<remote_parent_id/>
+<remote_sys_id>b51a2b7e73b247104f31ff604ab8b7b7</remote_sys_id>
+<state>loaded</state>
+<summary/>
+<sys_class_name>sys_remote_update_set</sys_class_name>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2026-08-26 09:19:34</sys_created_on>
+<sys_id>a39f5abb73fecb104f31ff604ab8b796</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2026-08-26 09:19:34</sys_updated_on>
+<update_set display_value=""/>
+<update_source display_value=""/>
+<updated/>
+</sys_remote_update_set>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_script_include_1952ab14731e8b504f31ff604ab8b78a</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;global.CodeAutoFixerEngine&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description/&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;CodeAutoFixerEngine&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[var CodeAutoFixerEngine = Class.create();
+CodeAutoFixerEngine.prototype = {
+    initialize: function() {
+		this.companyPrefix = "DEV: ";
+		var grApp = new GlideRecord('sys_scope');
+		grApp.addQuery('name', 'AutoFixer : Code Governance');
+		grApp.query();
+		if (grApp.next()) {
+			this.logTable = grApp.getValue('scope') + '_autofixer_log';
+		} else {
+			this.logTable = 'x_2107891_autofi_0_autofixer_log';
+		}
+
+		this.rules = [
+			{
+				id: 'naming_standard_pending',
+				detect: this.detectNamingStandardIssue,
+				fix: function(gr, proposedValue) {
+					gr.setValue('name', proposedValue);
+				}
+			},
+			{
+				id: 'documentation_pending',
+				detect: this.detectDocumentationIssue,
+				fix: function(gr, proposedValue) {
+					gr.setValue('script', proposedValue);
+				}
+			},
+			{
+				id: 'bad_gr_variable_pending',
+				detect: this.checkGlobalGRVariable,
+				fix: null
+			},
+			{
+				id: 'eval_usage_pending',
+				detect: this.checkEval,
+				fix: null
+			},
+			{
+				id: 'gslog_usage_pending',
+				detect: this.checkGSLog,
+				fix: null
+			},
+			{
+				id: 'new_array_pending',
+				detect: this.checkNewArray,
+				fix: null
+			},
+			{
+				id: 'new_object_pending',
+				detect: this.checkNewObject,
+				fix: null
+			},
+			{
+				id: 'gssleep_pending',
+				detect: this.checkGSSleep,
+				fix: null
+			},
+			{
+				id: 'getxml_pending',
+				detect: this.checkGetXML,
+				fix: null
+			},
+			{
+				id: 'getreference_pending',
+				detect: this.checkGetReference,
+				fix: null
+			},
+			{
+				id: 'hardcoded_sysid_pending',
+				detect: this.checkHardcodedSysId,
+				fix: null
+			},
+			{
+				id: 'hardcoded_url_pending',
+				detect: this.checkHardcodedUrl,
+				fix: null
+			},
+			{
+				id: 'setbasicauth_pending',
+				detect: this.checkSetBasicAuth,
+				fix: null
+			},
+			{
+				id: 'global_client_script_pending',
+				detect: this.checkGlobalClientScript,
+				fix: null
+			},
+			{
+				id: 'global_business_rule_pending',
+				detect: this.checkGlobalBusinessRule,
+				fix: null
+			}
+		];
+	},
+
+    processUpdateSet: function(updateSetId) {
+
+		if (!updateSetId)
+			return;
+
+		this.detectSystemJunk(updateSetId);
+
+		var grUpdateXML = new GlideRecord('sys_update_xml');
+		grUpdateXML.addQuery('update_set', updateSetId);
+		grUpdateXML.addQuery('name', 'STARTSWITH', 'sys_script')
+			.addOrCondition('name', 'STARTSWITH', 'sys_script_include')
+			.addOrCondition('name', 'STARTSWITH', 'sys_script_client');
+		grUpdateXML.query();
+
+		while (grUpdateXML.next()) {
+
+			var xmlName = grUpdateXML.getValue('name');
+			var typeName = grUpdateXML.getValue('type') || "Script Component";
+
+			if (!xmlName || xmlName.length &lt;= 33)
+				continue;
+
+			var targetSysId = xmlName.substring(xmlName.length - 32);
+			var targetTable = xmlName.substring(0, xmlName.length - 33);
+
+			var grSource = new GlideRecord(targetTable);
+
+			if (!grSource.isValid() || !grSource.get(targetSysId))
+				continue;
+
+			var srcName = grSource.getValue('name') || '';
+
+			if (srcName.indexOf('AutoFixer') &gt; -1 || srcName.indexOf('CodeAutoFixer') &gt; -1)
+				continue;
+
+			for (var i = 0; i &lt; this.rules.length; i++) {
+
+				var rule = this.rules[i];
+
+				var result = rule.detect.call(this, grSource);
+
+				if (!result)
+					continue;
+
+				this._createLog({
+
+					updateSet: updateSetId,
+
+					element: typeName + ": " + (grSource.getValue('name') || ''),
+
+					actionType: rule.id,
+
+					details: result.details,
+
+					targetTable: grSource.getTableName(),
+
+					targetSysId: grSource.getUniqueValue(),
+
+					currentValue: result.currentValue || '',
+
+					proposedValue: result.proposedValue || '',
+
+					lineNumber: result.lineNumber || null,
+
+					auditHistory: this.formatAuditHistory(
+						grSource.getTableName(),
+						grSource.getUniqueValue()
+					)
+
+				});
+
+			}
+
+		}
+
+		this.runNativePreview(updateSetId);
+		this.readPreviewProblems(updateSetId);
+
+	},
+
+    detectSystemJunk: function(updateSetId) {
+        var grJunk = new GlideRecord('sys_update_xml');
+        grJunk.addQuery('update_set', updateSetId);
+        grJunk.addQuery('sys_created_by', 'system');
+        grJunk.query();
+
+        while (grJunk.next()) {
+            var recordName = grJunk.getValue('target_name') || grJunk.getValue('name');
+            var recordType = grJunk.getValue('type') || 'System Record';
+
+            this._createLog({
+                updateSet: updateSetId,
+                element: recordType + ": " + recordName,
+                actionType: 'junk_pending',
+                details: "System-generated change detected (created by 'system'). Likely background noise (scheduled job, property auto-update) rather than real development work.",
+                targetTable: 'sys_update_xml',
+                targetSysId: grJunk.getUniqueValue(),
+                currentValue: 'Present in update set',
+                proposedValue: 'Removed from update set'
+            });
+        }
+    },
+
+	detectNamingStandardIssue: function(grRecord) {
+		if (!grRecord.isValidField('name')) return null;
+		var currentName = grRecord.getValue('name') || "";
+		if (!currentName) return null;
+
+		if (currentName.startsWith(this.companyPrefix)) {
+			var rest = currentName.substring(this.companyPrefix.length);
+			var cleanRest = rest.replace(/\s+/g, '');
+			if (cleanRest === rest) return null;
+			var fixedName = this.companyPrefix + cleanRest;
+			return {
+				details: "Naming standard issue detected. Extra spaces removed after the prefix.",
+				currentValue: currentName,
+				proposedValue: fixedName
+			};
+		}
+
+		var cleanName = currentName.replace(/\s+/g, '');
+		var finalName = this.companyPrefix + cleanName;
+
+		return {
+			details: "Naming standard issue detected. Spaces removed and company prefix added.",
+			currentValue: currentName,
+			proposedValue: finalName
+		};
+	},
+
+    detectDocumentationIssue: function(grRecord) {
+
+		if (!grRecord.isValidField('script'))
+			return null;
+
+		var script = grRecord.getValue('script') || "";
+
+		var description = "";
+
+		if (grRecord.isValidField('description'))
+			description = grRecord.getValue('description') || "";
+
+		var hasHeader =
+			script.trim().indexOf("/**") === 0;
+
+		if (description || hasHeader)
+			return null;
+
+		var recordName = grRecord.getValue('name') || "";
+
+		var today = new GlideDateTime()
+			.getLocalDate()
+			.getDisplayValue();
+
+		var regex = /(\w+)\s*:\s*function\s*\(([^)]*)\)/g;
+
+		var methods = [];
+
+		var match;
+
+		while ((match = regex.exec(script)) !== null) {
+
+			var method = match[1];
+
+			var params = match[2].trim();
+
+			methods.push(" * - " + method + "(" + params + ")");
+
+		}
+
+		var header =
+			"/**\n" +
+			" * @name " + recordName + "\n" +
+			" * @description TODO: Describe the purpose of this Script Include.\n" +
+			" * @date " + today + "\n" +
+			" * @methods\n";
+
+		if (methods.length &gt; 0)
+			header += methods.join("\n") + "\n";
+		else
+			header += " * - No methods detected\n";
+
+		header += " */\n\n";
+
+		return {
+
+			details:
+				"Documentation header missing. Proposed header contains " +
+				methods.length +
+				" detected method(s).",
+
+			currentValue: script,
+
+			proposedValue: header + script
+
+		};
+
+	},
+    // a partir de l'index d'un match trouvé dans le script, on calcule le numéro de la ligne
+    getLineNumber: function(script, matchIndex) {
+        if (matchIndex === undefined || matchIndex === null || matchIndex &lt; 0) return null;
+        return script.substring(0, matchIndex).split('\n').length;
+    },
+
+	checkGlobalGRVariable: function(grRecord) {
+
+		if (!grRecord.isValidField('script'))
+			return null;
+
+		var script = grRecord.getValue('script') || "";
+
+		var regex = /\b(var|let)\s+gr\b/;
+		var match = regex.exec(script);
+
+		if (!match)
+			return null;
+
+		return {
+			details: "Variable name 'gr' detected. Use descriptive GlideRecord variable names instead.",
+			currentValue: "Variable 'gr' found in script.",
+			proposedValue: "Rename variable to a descriptive name.",
+			lineNumber: this.getLineNumber(script, match.index)
+		};
+	},
+
+	checkGSLog: function(gr) {
+
+		if (!gr.isValidField('script'))
+			return null;
+
+		var script = gr.getValue('script') || '';
+		var match = /gs\.log\s*\(/.exec(script);
+
+		if (match) {
+			return {
+				details: "Usage of gs.log() detected. Prefer gs.info(), gs.warn() or gs.error().",
+				currentValue: "gs.log() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+
+		return null;
+	},
+
+	checkEval: function(gr) {
+
+		if (!gr.isValidField('script'))
+			return null;
+
+		var script = gr.getValue('script') || '';
+		var match = /\beval\s*\(/.exec(script);
+
+		if (match) {
+			return {
+				details: "Usage of eval() detected. Improper use of eval() opens your code to injection attacks.",
+				currentValue: "eval() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+
+		return null;
+	},
+
+	checkNewArray: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var match = /new\s+Array\s*\(/.exec(script);
+		if (match) {
+			return {
+				details: "Usage of 'new Array()' detected. Prefer the literal notation [].",
+				currentValue: "new Array() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+		return null;
+	},
+
+	checkNewObject: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var match = /new\s+Object\s*\(/.exec(script);
+		if (match) {
+			return {
+				details: "Usage of 'new Object()' detected. Prefer the literal notation {}.",
+				currentValue: "new Object() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+		return null;
+	},
+
+	checkGSSleep: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var match = /gs\.sleep\s*\(/.exec(script);
+		if (match) {
+			return {
+				details: "Usage of gs.sleep() detected on the server side. Blocks the thread and degrades platform performance.",
+				currentValue: "gs.sleep() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+		return null;
+	},
+
+	checkGetXML: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var match = /\.getXML\s*\(/.exec(script);
+		if (match &amp;&amp; !/\.getXMLAnswer\s*\(/.test(script)) {
+			return {
+				details: "Usage of getXML() detected. Prefer getXMLAnswer(), more reliable for parsing the response.",
+				currentValue: "getXML() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+		return null;
+	},
+
+	checkGetReference: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var match = /\.getReference\s*\(/.exec(script);
+		if (match) {
+			return {
+				details: "Usage of getReference() detected. Synchronous and expensive, prefer a direct GlideRecord query.",
+				currentValue: "getReference() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+		return null;
+	},
+
+	checkHardcodedSysId: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var pattern = /("|'|=|h|H|n|N|f|F|,)[a-z0-9]{32}("|'|\^|,|@)/;
+		var match = pattern.exec(script);
+		if (match) {
+			return {
+				details: "Hardcoded sys_id detected in the script — breaks portability between environments.",
+				currentValue: "Hardcoded sys_id found",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+		return null;
+	},
+
+	checkHardcodedUrl: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var instanceName = gs.getProperty('instance_name');
+		if (instanceName) {
+			var idx = script.indexOf(instanceName);
+			if (idx &gt; -1) {
+				return {
+					details: "Hardcoded instance URL/name detected — breaks portability between environments (dev/test/prod).",
+					currentValue: "Hardcoded instance URL found",
+					proposedValue: "",
+					lineNumber: this.getLineNumber(script, idx)
+				};
+			}
+		}
+		return null;
+	},
+
+	checkSetBasicAuth: function(gr) {
+		if (!gr.isValidField('script')) return null;
+		var script = gr.getValue('script') || '';
+		var match = /\.setBasicAuth\s*\(/.exec(script);
+		if (match) {
+			return {
+				details: "Usage of setBasicAuth() detected. Prefer a managed authentication profile instead of hardcoded credentials.",
+				currentValue: "setBasicAuth() found in script",
+				proposedValue: "",
+				lineNumber: this.getLineNumber(script, match.index)
+			};
+		}
+		return null;
+	},
+
+	checkGlobalClientScript: function(gr) {
+		if (gr.getTableName() !== 'sys_script_client') return null;
+		if (gr.getValue('table') === 'global' &amp;&amp; gr.active == true) {
+			return {
+				details: "Global Client Script detected — runs on ALL tables, high potential performance impact.",
+				currentValue: "Global Client Script active",
+				proposedValue: ""
+			};
+		}
+		return null;
+	},
+
+	checkGlobalBusinessRule: function(gr) {
+		if (gr.getTableName() !== 'sys_script') return null;
+		if (gr.getValue('collection') === 'global' &amp;&amp; gr.active == true) {
+			return {
+				details: "Global Business Rule detected — prefer a Script Include explicitly called rather than execution on all tables.",
+				currentValue: "Global Business Rule active",
+				proposedValue: ""
+			};
+		}
+		return null;
+	},
+
+    runNativePreview: function(updateSetId) {
+        var worker = new GlideUpdateSetWorker();
+        worker.setUpdateSetID(updateSetId);
+        worker.setBackground(false);
+        worker.start();
+        worker.waitForCompletion();
+    },
+
+    readPreviewProblems: function(updateSetId) {
+        var grProblems = new GlideRecord('sys_update_preview_problem');
+        grProblems.addQuery('update_set', updateSetId);
+        grProblems.query();
+        while (grProblems.next()) {
+            this._createLog({
+                updateSet: updateSetId,
+                element: grProblems.getValue('name') || 'Update Set Problem',
+                actionType: 'conflict_detected',
+                details: grProblems.getValue('description') || grProblems.getValue('short_description') || 'Native ServiceNow preview problem detected.',
+                currentValue: '',
+                proposedValue: ''
+            });
+        }
+    },
+
+    applyFix: function(logSysId) {
+		var grLog = new GlideRecord(this.logTable);
+		if (!grLog.get(logSysId)) return false;
+		if (grLog.getValue('status') != 'pending') return false;
+
+		var actionType = grLog.getValue('action_type');
+		var targetTable = grLog.getValue('target_table');
+		var targetSysId = grLog.getValue('target_sys_id');
+		var updateSucceeded = true;
+
+		var rule = null;
+		for (var i = 0; i &lt; this.rules.length; i++) {
+			if (this.rules[i].id === actionType) { rule = this.rules[i]; break; }
+		}
+
+		if (rule &amp;&amp; rule.fix &amp;&amp; targetTable &amp;&amp; targetSysId) {
+			var grTarget = new GlideRecord(targetTable);
+			if (grTarget.get(targetSysId)) {
+				rule.fix(grTarget, grLog.getValue('proposed_value'));
+				var result = grTarget.update();
+				if (!result) updateSucceeded = false;
+			} else {
+				updateSucceeded = false;
+			}
+		} else if (actionType == 'junk_pending' &amp;&amp; targetSysId) {
+			var grXml = new GlideRecord('sys_update_xml');
+			if (grXml.get(targetSysId)) {
+				updateSucceeded = grXml.deleteRecord();
+			}
+		}
+
+		grLog.setValue('status', updateSucceeded ? 'applied' : 'failed');
+		grLog.update();
+		return updateSucceeded;
+	},
+
+    rejectFix: function(logSysId) {
+        var grLog = new GlideRecord(this.logTable);
+        if (grLog.get(logSysId)) {
+            grLog.setValue('status', 'rejected');
+            grLog.update();
+        }
+        return true;
+    },
+
+    formatAuditHistory: function(targetTable, targetSysId) {
+        var lines = [];
+        var grAudit = new GlideRecord('sys_audit');
+        grAudit.addQuery('tablename', targetTable);
+        grAudit.addQuery('documentkey', targetSysId);
+        grAudit.orderByDesc('sys_created_on');
+        grAudit.setLimit(5);
+        grAudit.query();
+        while (grAudit.next()) {
+            lines.push(
+                grAudit.getValue('sys_created_on') + ' — ' +
+                grAudit.getDisplayValue('user') + ' changed ' +
+                grAudit.getValue('fieldname') + ': "' +
+                grAudit.getValue('oldvalue') + '" → "' +
+                grAudit.getValue('newvalue') + '"'
+            );
+        }
+        return lines.length ? lines.join('\n') : 'No recorded change history for this record.';
+    },
+
+    _createLog: function(logData) {
+        var grLog = new GlideRecord(this.logTable);
+        grLog.initialize();
+        grLog.setValue('update_set', logData.updateSet);
+        grLog.setValue('corrected_element', logData.element);
+        grLog.setValue('action_type', logData.actionType);
+        grLog.setValue('previous_name', logData.previousName || '');
+        grLog.setValue('new_name', logData.newName || '');
+        grLog.setValue('details', logData.details);
+        grLog.setValue('target_table', logData.targetTable || '');
+        grLog.setValue('target_sys_id', logData.targetSysId || '');
+        grLog.setValue('current_value', logData.currentValue || '');
+        grLog.setValue('proposed_value', logData.proposedValue || '');
+        grLog.setValue('audit_history', logData.auditHistory || '');
+        if (logData.lineNumber) grLog.setValue('line_number', logData.lineNumber);
+        grLog.setValue('status', 'pending');
+        grLog.insert();
+    },
+
+    type: 'CodeAutoFixerEngine'
+};]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-21 20:54:58&lt;/sys_created_on&gt;&lt;sys_id&gt;1952ab14731e8b504f31ff604ab8b78a&lt;/sys_id&gt;&lt;sys_mod_count&gt;19&lt;/sys_mod_count&gt;&lt;sys_name&gt;CodeAutoFixerEngine&lt;/sys_name&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_1952ab14731e8b504f31ff604ab8b78a&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-08-26 09:16:52&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;1952ab14731e8b504f31ff604ab8b78a&lt;/id&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-21 20:54:57&lt;/sys_created_on&gt;&lt;sys_id&gt;0b85af18731e8b504f31ff604ab8b761&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-07-21 20:54:57&lt;/sys_updated_on&gt;&lt;table&gt;sys_script_include&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+<payload_hash>-1863842896</payload_hash>
+<remote_update_set display_value="AutoFixer Export Global">a39f5abb73fecb104f31ff604ab8b796</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2026-08-26 09:19:34</sys_created_on>
+<sys_id>679f5abb73fecb104f31ff604ab8b797</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>1a03d5bac4b0000001</sys_recorded_at>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2026-08-26 09:19:34</sys_updated_on>
+<table/>
+<target_name>CodeAutoFixerEngine</target_name>
+<type>Script Include</type>
+<update_domain>global</update_domain>
+<update_guid>5c0f9a7baafecb10faae13b098c78780</update_guid>
+<update_guid_history>5c0f9a7baafecb10faae13b098c78780:-1863842896,aa2e523bc0fecb1048622c2747353153:-69813533,851377fefaf24710b2f0192e6bd6c69c:-1517027086,216fe33aa9f24710e8d78747c1fb3d7e:-1693316335,cffc96a25b3e83102adbbea0f3220443:-1150445664,f16c84019bfec3d0e3df9bc488fe9576:1565087497,6e9b0c4d74bec3d0606e4ae82b7a4225:-1235533911,2233c8f63f2207905166845d9e972a8f:-700014767,e3d68535ac664f505e755a49747f4d17:1841742225,3a9a4a2568220f509f892a0f3fc2de05:-2103050109,faa9026d08eecb50a9abfee69182d6ef:846979549,63160e692beecb50e0caeeb989fa05ad:593275583,8ac186e168eecb50d56b6c32a817d9fe:1573052368,0ac8f8dd4e2a4b5079963c6d7a547c88:341697072,402884122d9e43104b24381fea728112:-265451381,29356cc21f920310ab16ce33708e0ee1:1271707542,2120684a8f5203108efc2312e79976d3:-1858768916,245a5c4ea912031096611dc8a3e1a3c5:-1674611947,5592f7100e9e8b50b76504720e6cbb0c:957228344,7785e398e91e8b50e3654d437a4af651:-1638696536</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_ui_action_e7eb9e9a730e4f104f31ff604ab8b70d</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update sys_domain="global" table="sys_ui_action"&gt;&lt;sys_ui_action action="INSERT_OR_UPDATE"&gt;&lt;action_name/&gt;&lt;active&gt;true&lt;/active&gt;&lt;client&gt;false&lt;/client&gt;&lt;client_script_v2&gt;&lt;![CDATA[function onClick(g_form) {
+
+}]]&gt;&lt;/client_script_v2&gt;&lt;comments/&gt;&lt;condition/&gt;&lt;form_action&gt;true&lt;/form_action&gt;&lt;form_button&gt;true&lt;/form_button&gt;&lt;form_button_icon/&gt;&lt;form_button_v2&gt;false&lt;/form_button_v2&gt;&lt;form_context_menu&gt;false&lt;/form_context_menu&gt;&lt;form_link&gt;false&lt;/form_link&gt;&lt;form_menu_button_v2&gt;false&lt;/form_menu_button_v2&gt;&lt;form_style/&gt;&lt;format_for_configurable_workspace&gt;false&lt;/format_for_configurable_workspace&gt;&lt;hint/&gt;&lt;isolate_script&gt;false&lt;/isolate_script&gt;&lt;list_action&gt;false&lt;/list_action&gt;&lt;list_banner_button&gt;false&lt;/list_banner_button&gt;&lt;list_button&gt;false&lt;/list_button&gt;&lt;list_button_icon/&gt;&lt;list_choice&gt;false&lt;/list_choice&gt;&lt;list_context_menu&gt;false&lt;/list_context_menu&gt;&lt;list_link&gt;false&lt;/list_link&gt;&lt;list_save_with_form_button&gt;false&lt;/list_save_with_form_button&gt;&lt;list_style/&gt;&lt;messages/&gt;&lt;name&gt;Auto-Fix &amp;amp; Prepare Code&lt;/name&gt;&lt;onclick/&gt;&lt;order&gt;100&lt;/order&gt;&lt;script&gt;&lt;![CDATA[gs.info('AUTOFIXER_CANARY: button script started'); 
+var fixer = new CodeAutoFixerEngine(); fixer.processUpdateSet(current.sys_id); 
+gs.addInfoMessage("Code Governance execution complete! Check the 'AutoFixer Logs' tab below for results."); action.setRedirectURL(current);]]&gt;&lt;/script&gt;&lt;show_form_icon_only&gt;false&lt;/show_form_icon_only&gt;&lt;show_insert&gt;true&lt;/show_insert&gt;&lt;show_list_icon_only&gt;false&lt;/show_list_icon_only&gt;&lt;show_multiple_update&gt;false&lt;/show_multiple_update&gt;&lt;show_query&gt;false&lt;/show_query&gt;&lt;show_update&gt;true&lt;/show_update&gt;&lt;sys_class_name&gt;sys_ui_action&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-15 10:29:08&lt;/sys_created_on&gt;&lt;sys_domain&gt;global&lt;/sys_domain&gt;&lt;sys_domain_path&gt;/&lt;/sys_domain_path&gt;&lt;sys_id&gt;e7eb9e9a730e4f104f31ff604ab8b70d&lt;/sys_id&gt;&lt;sys_mod_count&gt;7&lt;/sys_mod_count&gt;&lt;sys_name&gt;Auto-Fix &amp;amp; Prepare Code&lt;/sys_name&gt;&lt;sys_overrides/&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ui_action_e7eb9e9a730e4f104f31ff604ab8b70d&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-08-23 12:51:40&lt;/sys_updated_on&gt;&lt;table&gt;sys_update_set&lt;/table&gt;&lt;ui11_compatible&gt;true&lt;/ui11_compatible&gt;&lt;ui16_compatible&gt;false&lt;/ui16_compatible&gt;&lt;/sys_ui_action&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;e7eb9e9a730e4f104f31ff604ab8b70d&lt;/id&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-07-15 10:28:59&lt;/sys_created_on&gt;&lt;sys_id&gt;0fbcd21e730e4f104f31ff604ab8b795&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-07-15 10:28:59&lt;/sys_updated_on&gt;&lt;table&gt;sys_ui_action&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+<payload_hash>435476205</payload_hash>
+<remote_update_set display_value="AutoFixer Export Global">a39f5abb73fecb104f31ff604ab8b796</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2026-08-26 09:19:34</sys_created_on>
+<sys_id>ab9f5abb73fecb104f31ff604ab8b797</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>1a02ead416f0000001</sys_recorded_at>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2026-08-26 09:19:34</sys_updated_on>
+<table>sys_update_set</table>
+<target_name>Auto-Fix &amp; Prepare Code</target_name>
+<type>UI Action</type>
+<update_domain>global</update_domain>
+<update_guid>2d63b7fefef247105eb1528e63a6158e</update_guid>
+<update_guid_history>2d63b7fefef247105eb1528e63a6158e:435476205,04afeb3a91f24710b907775067bbca14:1359499573,92fea398d35e8b50a0882849ba85faa4:435476205,70afdfdcd6da8b50ffbe1f8f8c06b125:-1432997423,0ca6d3105bda8b50799710661cc0e594:-1616816252,8ca0c5ffff0a8750bba0ea88adbd444c:-2022654088,74e0a6d2794e4f109b2454bfed686bb3:1832703413,fdcc5a1ef70e4f1019361489a973dbcf:2002867382</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+<sys_update_xml action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<category>customer</category>
+<comments/>
+<name>sys_script_bdd4ccf6732207904f31ff604ab8b751</name>
+<payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update sys_domain="global" table="sys_script"&gt;&lt;sys_script action="INSERT_OR_UPDATE"&gt;&lt;abort_action&gt;false&lt;/abort_action&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;action_delete&gt;false&lt;/action_delete&gt;&lt;action_insert&gt;false&lt;/action_insert&gt;&lt;action_query&gt;false&lt;/action_query&gt;&lt;action_update&gt;true&lt;/action_update&gt;&lt;active&gt;true&lt;/active&gt;&lt;add_message&gt;false&lt;/add_message&gt;&lt;advanced&gt;true&lt;/advanced&gt;&lt;change_fields&gt;false&lt;/change_fields&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;collection&gt;sys_update_set&lt;/collection&gt;&lt;condition/&gt;&lt;description/&gt;&lt;execute_function&gt;false&lt;/execute_function&gt;&lt;filter_condition/&gt;&lt;is_rest&gt;false&lt;/is_rest&gt;&lt;message/&gt;&lt;name&gt;AutoFixer Quality Gate&lt;/name&gt;&lt;order&gt;100&lt;/order&gt;&lt;priority&gt;100&lt;/priority&gt;&lt;rest_method/&gt;&lt;rest_method_text/&gt;&lt;rest_service/&gt;&lt;rest_service_text/&gt;&lt;rest_variables/&gt;&lt;role_conditions/&gt;&lt;script&gt;&lt;![CDATA[(function executeRule(current, previous) {
+
+
+    if (current.getValue('state').toLowerCase() != 'complete') {
+        return;
+    }
+
+    var CRITICAL_TYPES = ['conflict_detected', 'eval_usage_pending', 'hardcoded_sysid_pending', 'hardcoded_url_pending', 'setbasicauth_pending'];
+
+    var grLog = new GlideRecord('x_2107891_autofi_0_autofixer_log');
+    grLog.addQuery('update_set', current.getUniqueValue());
+    grLog.addQuery('status', 'pending');
+    grLog.addQuery('action_type', 'IN', CRITICAL_TYPES.join(','));
+    grLog.query();
+
+    var count = 0;
+    while (grLog.next()) {
+        count++;
+	}
+    if (count &gt; 0) {
+        current.setAbortAction(true);
+        gs.addErrorMessage("Cet Update Set contient des problèmes CRITIQUES non résolus (sécurité ou collision) détectés par AutoFixer. Traitez-les (Apply ou Reject) avant de finaliser cet Update Set.");
+    }
+})(current, previous);]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-08-10 09:19:26&lt;/sys_created_on&gt;&lt;sys_domain&gt;global&lt;/sys_domain&gt;&lt;sys_domain_path&gt;/&lt;/sys_domain_path&gt;&lt;sys_id&gt;bdd4ccf6732207904f31ff604ab8b751&lt;/sys_id&gt;&lt;sys_mod_count&gt;4&lt;/sys_mod_count&gt;&lt;sys_name&gt;AutoFixer Quality Gate&lt;/sys_name&gt;&lt;sys_overrides/&gt;&lt;sys_package display_value="Global" source="global"&gt;global&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="Global"&gt;global&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_bdd4ccf6732207904f31ff604ab8b751&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-08-23 12:56:03&lt;/sys_updated_on&gt;&lt;template/&gt;&lt;when&gt;before&lt;/when&gt;&lt;/sys_script&gt;&lt;sys_translated_text action="delete_multiple" query="documentkey=bdd4ccf6732207904f31ff604ab8b751"/&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;bdd4ccf6732207904f31ff604ab8b751&lt;/id&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-08-10 09:19:21&lt;/sys_created_on&gt;&lt;sys_id&gt;ec26007e732207904f31ff604ab8b79b&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-08-10 09:19:21&lt;/sys_updated_on&gt;&lt;table&gt;sys_script&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+<payload_hash>2024075255</payload_hash>
+<remote_update_set display_value="AutoFixer Export Global">a39f5abb73fecb104f31ff604ab8b796</remote_update_set>
+<replace_on_upgrade>false</replace_on_upgrade>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2026-08-26 09:19:34</sys_created_on>
+<sys_id>e79f5abb73fecb104f31ff604ab8b796</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>1a02eb1426e0000001</sys_recorded_at>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2026-08-26 09:19:34</sys_updated_on>
+<table>sys_update_set</table>
+<target_name>AutoFixer Quality Gate</target_name>
+<type>Business Rule</type>
+<update_domain>global</update_domain>
+<update_guid>ad64bffe64f247105b9809f11fb4bfc7</update_guid>
+<update_guid_history>ad64bffe64f247105b9809f11fb4bfc7:2024075255,1bef277afef24710e08083e49e2e0afc:-869125675,f0f0908910fec3d0cf06cb280d373655:1475433333,fb6e8445ebfec3d04d67852439d8cf58:1273155592,4226407ed5220790e74ba07666ffee1f:-1760393671</update_guid_history>
+<update_set display_value=""/>
+<view/>
+</sys_update_xml>
+</unload>
